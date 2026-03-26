@@ -83,12 +83,12 @@ CFG
 msg "Creating launch script..."
 cat > "$HLDIR/Play FreeCS.bat" <<'BAT'
 @echo off
-start "" "%~dp0fteqw64.exe" -game cstrike
+start "" "%~dp0fteqw64.exe" -game cstrike +sv_master1 "ms.cs16.net:27950"
 BAT
 
 cat > "$HLDIR/Play FreeCS (Windowed).bat" <<'BAT'
 @echo off
-start "" "%~dp0fteqw64.exe" -game cstrike -window
+start "" "%~dp0fteqw64.exe" -game cstrike -window +sv_master1 "ms.cs16.net:27950"
 BAT
 
 msg "Creating freecs-client-win64.zip..."
