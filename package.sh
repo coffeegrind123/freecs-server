@@ -77,9 +77,9 @@ unzip -qo "$DL_DIR/package_cstrike.pk3" -d "$TMPEXT"
 mv "$TMPEXT"/*.pk3 "$TMPEXT"/*.dat "$HLDIR/cstrike/" 2>/dev/null || true
 rm -rf "$TMPEXT"
 
-msg "Extracting CS 1.5 maps from data archive..."
-mkdir -p "$HLDIR/cstrike/maps"
-unzip -qo "$DL_DIR/cs15data.zip" "maps/*.bsp" -d "$HLDIR/cstrike/"
+msg "Extracting CS 1.5 data from archive (maps, models, sounds)..."
+mkdir -p "$HLDIR/cstrike"
+unzip -qo "$DL_DIR/cs15data.zip" "maps/*.bsp" "models/*" "sound/*" -d "$HLDIR/cstrike/"
 
 msg "Copying FreeCS repo data..."
 for item in cfg data decls fonts gfx maps particles progs resource scripts \
