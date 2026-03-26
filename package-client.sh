@@ -42,12 +42,18 @@ download "$CS15_URL" "$DL_DIR/cs15data.zip"
 msg "Setting up directory structure..."
 mkdir -p "$HLDIR/valve" "$HLDIR/cstrike"
 
-msg "Extracting FTEQW Windows client..."
-TMPEXT="$BUILD_DIR/tmp/fteqw_extract"
-mkdir -p "$TMPEXT"
-unzip -qo "$DL_DIR/fteqw-win64.zip" -d "$TMPEXT"
-cp -f "$TMPEXT/fteqw64.exe" "$HLDIR/fteqw64.exe"
-rm -rf "$TMPEXT"
+msg "Copying patched FTEQW Windows client..."
+PATCHED_EXE="$SCRIPT_DIR/bin/fteqw64.exe"
+if [ -f "$PATCHED_EXE" ]; then
+    cp -f "$PATCHED_EXE" "$HLDIR/fteqw64.exe"
+else
+    msg "No patched binary at bin/fteqw64.exe, extracting stock from zip..."
+    TMPEXT="$BUILD_DIR/tmp/fteqw_extract"
+    mkdir -p "$TMPEXT"
+    unzip -qo "$DL_DIR/fteqw-win64.zip" -d "$TMPEXT"
+    cp -f "$TMPEXT/fteqw64.exe" "$HLDIR/fteqw64.exe"
+    rm -rf "$TMPEXT"
+fi
 
 msg "Copying game data..."
 cp -f "$DL_DIR/package_valve.pk3" "$HLDIR/valve/package_valve.pk3"
@@ -77,18 +83,21 @@ done
 msg "Creating client config..."
 cat > "$HLDIR/cstrike/autoexec.cfg" <<'CFG'
 set net_master1 "ms.cs16.net:27950"
+set net_masterextra1 ""
+set net_masterextra2 ""
+set net_masterextra3 ""
 set com_protocolname "FTE-Quake"
 CFG
 
 msg "Creating launch script..."
 cat > "$HLDIR/Play FreeCS.bat" <<'BAT'
 @echo off
-start "" "%~dp0fteqw64.exe" -game cstrike +sv_master1 "ms.cs16.net:27950"
+start "" "%~dp0fteqw64.exe" -game cstrike +sv_master1 "ms.cs16.net:27950" +net_masterextra1 "" +net_masterextra2 "" +net_masterextra3 "" +net_qwmasterextra1 "" +net_qwmasterextra2 "" +net_qwmasterextra3 "" +net_qwmasterextra4 "" +net_qwmasterextra5 ""
 BAT
 
 cat > "$HLDIR/Play FreeCS (Windowed).bat" <<'BAT'
 @echo off
-start "" "%~dp0fteqw64.exe" -game cstrike -window +sv_master1 "ms.cs16.net:27950"
+start "" "%~dp0fteqw64.exe" -game cstrike -window +sv_master1 "ms.cs16.net:27950" +net_masterextra1 "" +net_masterextra2 "" +net_masterextra3 "" +net_qwmasterextra1 "" +net_qwmasterextra2 "" +net_qwmasterextra3 "" +net_qwmasterextra4 "" +net_qwmasterextra5 ""
 BAT
 
 msg "Creating freecs-client-win64.zip..."
