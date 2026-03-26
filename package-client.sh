@@ -54,6 +54,17 @@ cp -f "$DL_DIR/package_valve.pk3" "$HLDIR/valve/package_valve.pk3"
 cp -f "$DL_DIR/package_cstrike.pk3" "$HLDIR/cstrike/package_cstrike.pk3"
 cp -f "$DL_DIR/cs15data.zip" "$HLDIR/cstrike/pak0.pk3"
 
+cat > "$HLDIR/valve/liblist.gam" <<'LIBLIST'
+game "Half-Life"
+startmap "c0a0"
+trainmap "t0a0"
+mpentity "info_player_deathmatch"
+gamedll "dlls/hl.dll"
+gamedll_linux "dlls/hl.so"
+type "singleplayer_only"
+cldll "1"
+LIBLIST
+
 msg "Copying FreeCS repo data..."
 for item in cfg data decls fonts gfx maps particles progs resource scripts \
             progs.dat csprogs.dat hud.dat quake.rc icon.tga \
@@ -81,7 +92,7 @@ start "" "%~dp0fteqw64.exe" -game cstrike -window
 BAT
 
 msg "Creating freecs-client-win64.zip..."
-(cd "$BUILD_DIR" && zip -qr "$SCRIPT_DIR/freecs-client-win64.zip" freecs-client/)
+(cd "$PKG_DIR" && zip -qr "$SCRIPT_DIR/freecs-client-win64.zip" Half-Life/)
 
 SIZE=$(du -sh "$SCRIPT_DIR/freecs-client-win64.zip" | cut -f1)
 msg "Done! Package: freecs-client-win64.zip ($SIZE)"
