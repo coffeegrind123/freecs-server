@@ -63,6 +63,12 @@ for item in cfg data decls fonts gfx maps particles progs resource scripts \
     fi
 done
 
+msg "Creating client config..."
+cat > "$HLDIR/cstrike/autoexec.cfg" <<'CFG'
+set net_master1 "ms.cs16.net:27950"
+set com_protocolname "FTE-Quake"
+CFG
+
 msg "Creating launch script..."
 cat > "$HLDIR/Play FreeCS.bat" <<'BAT'
 @echo off
