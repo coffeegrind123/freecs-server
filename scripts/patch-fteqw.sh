@@ -18,7 +18,7 @@ index 2d618c1..fb3ba43 100644
  
  #define INSTALLEDFILES	"installed.lst"	//the file that resides in the quakedir (saying what's installed).
 diff --git a/engine/client/net_master.c b/engine/client/net_master.c
-index 30f6c85..9c654c3 100644
+index 30f6c85..d26556a 100644
 --- a/engine/client/net_master.c
 +++ b/engine/client/net_master.c
 @@ -150,8 +150,8 @@ static net_masterlist_t net_masterlist[] = {
@@ -70,6 +70,40 @@ index 30f6c85..9c654c3 100644
  				CL_MasterListParse(NA_IP, SS_GETINFO, true);
  				continue;
  			}
+@@ -3063,26 +3063,26 @@ void MasterInfo_Refresh(qboolean doreset)
+ 
+ 		Master_LoadMasterList("servers.txt", false, MT_MASTERUDP, MP_QUAKEWORLD, 1);
+ 
+-		Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_DEFAULTSERVER),			MT_BCAST,			MP_DPMASTER, "Nearby Game Servers.");
++		//Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_DEFAULTSERVER),			MT_BCAST,			MP_DPMASTER, "Nearby Game Servers.");
+ #ifndef QUAKETC
+-		Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_QWSERVER),				MT_BCAST,			MP_QUAKEWORLD, "Nearby QuakeWorld UDP servers.");
++		//Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_QWSERVER),				MT_BCAST,			MP_QUAKEWORLD, "Nearby QuakeWorld UDP servers.");
+ //		Master_AddMasterHTTP("http://www.gameaholic.com/servers/qspy-quakeworld",	MT_MASTERHTTP,		MP_QUAKEWORLD, "gameaholic's QW master");
+ //		Master_AddMasterHTTP("https://www.quakeservers.net/lists/servers/global.txt",MT_MASTERHTTP,		MP_QUAKEWORLD, "QuakeServers.net (http)");
+ #endif
+ #ifdef NQPROT
+ //		Master_AddMasterHTTP("http://www.gameaholic.com/servers/qspy-quake",		MT_MASTERHTTP,		MP_NETQUAKE, "gameaholic's NQ master");
+ //		Master_AddMasterHTTP("http://servers.quakeone.com/index.php?format=json",	MT_MASTERHTTPJSON,	MP_NETQUAKE, "quakeone's server listing");
+-		Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_NQSERVER),				MT_BCAST,			MP_NETQUAKE, "Nearby Quake1 servers");
+-		Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_NQSERVER),				MT_BCAST,			MP_DPMASTER, "Nearby DarkPlaces servers");	//only responds to one type, depending on active protocol.
++		//Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_NQSERVER),				MT_BCAST,			MP_NETQUAKE, "Nearby Quake1 servers");
++		//Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_NQSERVER),				MT_BCAST,			MP_DPMASTER, "Nearby DarkPlaces servers");	//only responds to one type, depending on active protocol.
+ #endif
+ #ifdef Q2CLIENT
+ //		Master_AddMasterHTTP("http://www.gameaholic.com/servers/qspy-quake2",		MT_MASTERHTTP,		MP_QUAKE2, "gameaholic's Q2 master");
+-		Master_AddMasterHTTP("http://q2servers.com/?raw=1",							MT_MASTERHTTP,		MP_QUAKE2, "q2servers.com");	//https is fucked. binary version is defective as it has no way to represent ipv6, so don't use that.
+-		Master_AddMaster("255.255.255.255:27910",									MT_BCAST,			MP_QUAKE2, "Nearby Quake2 UDP servers.");
++		//Master_AddMasterHTTP("http://q2servers.com/?raw=1",							MT_MASTERHTTP,		MP_QUAKE2, "q2servers.com");	//https is fucked. binary version is defective as it has no way to represent ipv6, so don't use that.
++		//Master_AddMaster("255.255.255.255:27910",									MT_BCAST,			MP_QUAKE2, "Nearby Quake2 UDP servers.");
+ #endif
+ #ifdef Q3CLIENT
+ //		Master_AddMasterHTTP("http://www.gameaholic.com/servers/qspy-quake3",		MT_MASTERHTTP,		MP_QUAKE3, "gameaholic's Q3 master");
+-		Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_Q3SERVER),				MT_BCAST,			MP_QUAKE3, "Nearby Quake3 UDP servers.");
++		//Master_AddMaster("255.255.255.255:"STRINGIFY(PORT_Q3SERVER),				MT_BCAST,			MP_QUAKE3, "Nearby Quake3 UDP servers.");
+ #endif
+ 
+ 		if (!*net_ice_broker.string)
 diff --git a/engine/common/fs.c b/engine/common/fs.c
 index 92a816d..b3845b1 100644
 --- a/engine/common/fs.c
