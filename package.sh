@@ -10,6 +10,7 @@ FTEQW_URL="https://github.com/fte-team/fteqw/releases/download/2025-09-27/fteqw-
 VALVE_PK3_URL="https://www.frag-net.com/pkgs/package_valve.pk3"
 CSTRIKE_PK3_URL="https://www.frag-net.com/pkgs/package_cstrike.pk3"
 CS15_URL="https://archive.org/download/counter-strike-1.5/csv15full_cstrike.zip"
+GOLDSRC_URL="https://mega.nz/file/sVwBhZKK#4WfFaQUi3gSFfK0ltdqgzT36gPbUtou3tb3GUWUSSio"
 
 err() { echo "ERROR: $*" >&2; exit 1; }
 msg() { echo "==> $*"; }
@@ -39,6 +40,16 @@ download "$VALVE_PK3_URL" "$DL_DIR/package_valve.pk3"
 download "$CSTRIKE_PK3_URL" "$DL_DIR/package_cstrike.pk3"
 download "$CS15_URL" "$DL_DIR/cs15data.zip"
 
+if [ ! -f "$DL_DIR/valve-data.pk3" ]; then
+    msg "Downloading HL1 valve data (GoldSrc Package)..."
+    megadl "$GOLDSRC_URL" --path "$DL_DIR/"
+    GSRC_7Z=$(find "$DL_DIR" -name "GoldSrc*" -print -quit)
+    [ -n "$GSRC_7Z" ] || err "GoldSrc download failed"
+    7z x -o"$BUILD_DIR/tmp/goldsrc" "$GSRC_7Z" "Half-Life WON/valve/models/" "Half-Life WON/valve/sound/" "Half-Life WON/valve/sprites/" "Half-Life WON/valve/*.wad" -y
+    (cd "$BUILD_DIR/tmp/goldsrc/Half-Life WON/valve" && zip -qr "$DL_DIR/valve-data.pk3" models/ sound/ sprites/ *.wad)
+    rm -rf "$BUILD_DIR/tmp/goldsrc" "$GSRC_7Z"
+fi
+
 msg "Setting up directory structure..."
 mkdir -p "$HLDIR/valve" "$HLDIR/cstrike"
 
@@ -59,6 +70,9 @@ unzip -qo "$DL_DIR/package_valve.pk3" -d "$TMPEXT"
 mv "$TMPEXT"/*.pk3 "$TMPEXT"/*.dat "$HLDIR/valve/"
 rm -rf "$TMPEXT"
 
+msg "Copying HL1 valve data..."
+cp -f "$DL_DIR/valve-data.pk3" "$HLDIR/valve/valve-data.pk3"
+
 cat > "$HLDIR/valve/liblist.gam" <<'LIBLIST'
 game "Half-Life"
 startmap "c0a0"
@@ -77,7 +91,7 @@ unzip -qo "$DL_DIR/package_cstrike.pk3" -d "$TMPEXT"
 mv "$TMPEXT"/*.pk3 "$TMPEXT"/*.dat "$HLDIR/cstrike/" 2>/dev/null || true
 rm -rf "$TMPEXT"
 
-msg "Copying CS 1.5 data archive..."
+msg "Extracting CS 1.5 data from archive..."
 cp -f "$DL_DIR/cs15data.zip" "$HLDIR/cstrike/pak0.pk3"
 
 msg "Copying FreeCS repo data..."
