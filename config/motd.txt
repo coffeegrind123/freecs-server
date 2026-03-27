@@ -1,0 +1,5 @@
+Welcome to FreeCS Server
+Open-source Counter-Strike 1.5
+
+Download the client: http://freecs.cs16.net:27500
+Server list: ms.cs16.net

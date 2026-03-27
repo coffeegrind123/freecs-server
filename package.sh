@@ -105,6 +105,8 @@ done
 
 msg "Copying server config..."
 cp -f "$SCRIPT_DIR/config/server.cfg" "$HLDIR/cstrike/server.cfg"
+cp -f "$SCRIPT_DIR/config/mapcycle.txt" "$HLDIR/cstrike/mapcycle.txt"
+cp -f "$SCRIPT_DIR/config/motd.txt" "$HLDIR/cstrike/motd.txt"
 
 msg "Copying scripts..."
 cp -f "$SCRIPT_DIR/install.sh" "$PKG_DIR/install.sh"
