@@ -76,7 +76,7 @@ All settings verified against FreeCS source code. Only includes cvars that are a
 
 ### Map Rotation
 
-When `mp_timelimit` or `mp_winlimit` is reached, the server waits 5 seconds then restarts the current map. This is a fix we applied to the FreeCS QuakeC source — upstream FreeCS sets `STATE_OVER` but never calls `changelevel`, so the map would never change. The compiled `progs.dat` includes this fix.
+When `mp_timelimit` or `mp_winlimit` is reached, the server waits 5 seconds then advances to the next map in `mapcycle.txt`. This uses the Nuclide SDK's built-in mapcycle support (`nextmap` alias chain) — upstream FreeCS sets `STATE_OVER` but never triggers a map change, so we added the `localcmd("nextmap")` call. If `mapcycle.txt` is missing, it falls back to restarting the current map.
 
 ### Auto-Restart
 
