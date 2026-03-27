@@ -6,7 +6,6 @@ BUILD_DIR="$SCRIPT_DIR/build"
 PKG_DIR="$BUILD_DIR/freecs-server"
 HLDIR="$PKG_DIR/Half-Life"
 
-FTEQW_URL="https://github.com/fte-team/fteqw/releases/download/2025-09-27/fteqw-linux64-c781d13.zip"
 VALVE_PK3_URL="https://www.frag-net.com/pkgs/package_valve.pk3"
 CSTRIKE_PK3_URL="https://www.frag-net.com/pkgs/package_cstrike.pk3"
 CS15_URL="https://archive.org/download/counter-strike-1.5/csv15full_cstrike.zip"
@@ -35,7 +34,6 @@ mkdir -p "$BUILD_DIR/tmp" "$PKG_DIR"
 DL_DIR="$BUILD_DIR/downloads"
 mkdir -p "$DL_DIR"
 
-download "$FTEQW_URL" "$DL_DIR/fteqw-linux64.zip"
 download "$VALVE_PK3_URL" "$DL_DIR/package_valve.pk3"
 download "$CSTRIKE_PK3_URL" "$DL_DIR/package_cstrike.pk3"
 download "$CS15_URL" "$DL_DIR/cs15data.zip"
@@ -53,15 +51,31 @@ fi
 msg "Setting up directory structure..."
 mkdir -p "$HLDIR/valve" "$HLDIR/cstrike"
 
-msg "Extracting FTEQW dedicated server..."
-TMPEXT="$BUILD_DIR/tmp/fteqw_extract"
-mkdir -p "$TMPEXT"
-unzip -qo "$DL_DIR/fteqw-linux64.zip" -d "$TMPEXT"
-SVBIN=$(find "$TMPEXT" -name "fteqw-sv64" -print -quit)
-[ -n "$SVBIN" ] || err "fteqw-sv64 not found in zip"
+FTEQW_DIR="$BUILD_DIR/fteqw"
+SVBIN="$FTEQW_DIR/engine/release/fteqw-sv64"
+
+if [ -f "$SVBIN" ]; then
+    msg "FTEQW server binary already built, skipping..."
+else
+    msg "Cloning FTEQW..."
+    if [ ! -d "$FTEQW_DIR" ]; then
+        git clone --depth 1 https://github.com/fte-team/fteqw.git "$FTEQW_DIR"
+    fi
+
+    msg "Patching FTEQW..."
+    bash "$SCRIPT_DIR/scripts/patch-fteqw.sh" "$FTEQW_DIR"
+
+    msg "Building FTEQW static libraries..."
+    (cd "$FTEQW_DIR/engine" && make makelibs FTE_TARGET=linux64)
+
+    msg "Building FTEQW dedicated server..."
+    (cd "$FTEQW_DIR/engine" && make sv-rel FTE_TARGET=linux64 -j"$(nproc)")
+
+    [ -f "$SVBIN" ] || err "fteqw-sv64 not found after build"
+fi
+
 cp -f "$SVBIN" "$HLDIR/fteqw-sv64"
 chmod +x "$HLDIR/fteqw-sv64"
-rm -rf "$TMPEXT"
 
 msg "Extracting valve pk3 (flat, avoids nested pk3 OOM on low-RAM servers)..."
 TMPEXT="$BUILD_DIR/tmp/valve_extract"
