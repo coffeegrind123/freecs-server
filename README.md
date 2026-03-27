@@ -36,7 +36,7 @@ ssh root@your-server 'cd /root && tar xzf freecs-server.tar.gz && cd freecs-serv
 2. Builds `fteqcc` (QuakeC compiler) from the same FTEQW source
 3. Clones [Nuclide SDK](https://code.idtech.space/vera/nuclide) and [valve](https://code.idtech.space/fn/valve) (current branch), compiles FreeCS QuakeC from `freecs-data/src/` — produces `progs.dat` with our fixes (timelimit map change, API compat)
 4. Downloads [Rad-Therapy](https://www.frag-net.com/pkgs/package_valve.pk3) (open-source Half-Life base data)
-5. Downloads [FreeCS release pk3](https://www.frag-net.com/pkgs/package_cstrike.pk3) (fallback game data)
+5. Downloads [FreeCS release pk3](https://www.frag-net.com/pkgs/package_cstrike.pk3) (contains zpak001.pk3 game assets)
 6. Downloads CS 1.5 data from archive.org (maps, models, sounds, sprites, textures)
 7. Downloads GoldSrc Package from mega.nz and extracts HL1 valve data as `valve-data.pk3`
 8. Extracts Rad-Therapy pk3s flat to avoid nested-archive OOM on low-RAM servers
@@ -73,6 +73,14 @@ All settings verified against FreeCS source code. Only includes cvars that are a
 | `bot_minClients` | 0 | Auto-fill bots (0 = none, set higher to populate empty server) |
 
 **Note:** `mp_buytime` and `mp_c4timer` are declared in FreeCS but not enforced in the game code (c4 timer is hardcoded at 45s). `mp_autoteambalance`, `mp_limitteams`, `mp_maxrounds`, `mp_hostagepenalty`, and `mp_tkpunish` are not implemented.
+
+### Map Rotation
+
+When `mp_timelimit` or `mp_winlimit` is reached, the server waits 5 seconds then restarts the current map. This is a fix we applied to the FreeCS QuakeC source — upstream FreeCS sets `STATE_OVER` but never calls `changelevel`, so the map would never change. The compiled `progs.dat` includes this fix.
+
+### Auto-Restart
+
+The systemd service uses `RuntimeMaxSec=10800` (3 hours) with `Restart=always` to automatically restart the server periodically, preventing memory leaks and stale state.
 
 ### config/mapcycle.txt
 
