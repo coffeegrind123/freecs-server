@@ -83,21 +83,20 @@ chmod +x "$HLDIR/fteqw-sv64"
 NUCLIDE_DIR="$BUILD_DIR/nuclide"
 if [ ! -d "$NUCLIDE_DIR/src" ]; then
     msg "Cloning Nuclide SDK..."
-    git clone --depth 1 -b current https://code.idtech.space/vera/nuclide.git "$NUCLIDE_DIR"
-    git clone --depth 1 -b current https://code.idtech.space/fn/valve.git "$NUCLIDE_DIR/valve"
+    git clone https://code.idtech.space/vera/nuclide.git "$NUCLIDE_DIR" && (cd "$NUCLIDE_DIR" && git checkout a9ededfd)
+    git clone https://code.idtech.space/fn/valve.git "$NUCLIDE_DIR/valve" && (cd "$NUCLIDE_DIR/valve" && git checkout 9272244)
 fi
 
 FTEQCC="$FTEQW_DIR/engine/release/fteqcc64"
 if [ -f "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
     msg "Compiling FreeCS QuakeC..."
     mkdir -p "$NUCLIDE_DIR/cstrike"
-    cp -a "$SCRIPT_DIR/freecs-data/src" "$SCRIPT_DIR/freecs-data/DEPENDS" "$SCRIPT_DIR/freecs-data/PAK_NAME" "$SCRIPT_DIR/freecs-data/PROJECT" "$NUCLIDE_DIR/cstrike/"
-    cp -f "$FTEQCC" "$NUCLIDE_DIR/fteqcc"
-    chmod +x "$NUCLIDE_DIR/fteqcc"
-    (cd "$NUCLIDE_DIR" && make game GAME=cstrike)
+    cp -a "$SCRIPT_DIR/freecs-data/src" "$NUCLIDE_DIR/cstrike/"
+    cp -f "$SCRIPT_DIR/freecs-data/DEPENDS" "$SCRIPT_DIR/freecs-data/PAK_NAME" "$SCRIPT_DIR/freecs-data/PROJECT" "$NUCLIDE_DIR/cstrike/" 2>/dev/null || true
+    (cd "$NUCLIDE_DIR/cstrike/src/server" && "$FTEQCC" -I../../../src/xr/ progs.src)
+    (cd "$NUCLIDE_DIR/cstrike/src/client" && "$FTEQCC" -I../../../src/xr/ progs.src)
     msg "Copying compiled progs..."
-    cp -f "$NUCLIDE_DIR/cstrike/progs.dat" "$NUCLIDE_DIR/cstrike/csprogs.dat" "$NUCLIDE_DIR/cstrike/hud.dat" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
-    cp -af "$NUCLIDE_DIR/cstrike/progs/" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
+    cp -f "$NUCLIDE_DIR/cstrike/progs.dat" "$NUCLIDE_DIR/cstrike/csprogs.dat" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
 else
     msg "Skipping QC compilation (fteqcc or freecs-data/src not found)"
 fi
