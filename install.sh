@@ -53,9 +53,10 @@ Type=simple
 User=freecs
 Environment=HOME=$INSTALL_DIR/Half-Life
 WorkingDirectory=$INSTALL_DIR/Half-Life
-ExecStart=$INSTALL_DIR/Half-Life/fteqw-sv64 -game cstrike +pr_ssqc_memsize 32m +pr_maxedicts 2048 +sv_master1 "ms.cs16.net:27950" +map de_dust2 +exec server.cfg
-Restart=on-failure
+ExecStart=$INSTALL_DIR/Half-Life/fteqw-sv64 -game cstrike +pr_ssqc_memsize 32m +pr_maxedicts 4096 +sv_master1 "ms.cs16.net:27950" +map de_dust2 +exec server.cfg
+Restart=always
 RestartSec=5
+RuntimeMaxSec=10800
 
 [Install]
 WantedBy=multi-user.target
