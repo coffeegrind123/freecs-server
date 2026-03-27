@@ -71,11 +71,36 @@ else
     msg "Building FTEQW dedicated server..."
     (cd "$FTEQW_DIR/engine" && make sv-rel FTE_TARGET=linux64 -j"$(nproc)")
 
+    msg "Building FTEQCC..."
+    (cd "$FTEQW_DIR/engine" && make qcc-rel -j"$(nproc)")
+
     [ -f "$SVBIN" ] || err "fteqw-sv64 not found after build"
 fi
 
 cp -f "$SVBIN" "$HLDIR/fteqw-sv64"
 chmod +x "$HLDIR/fteqw-sv64"
+
+NUCLIDE_DIR="$BUILD_DIR/nuclide"
+if [ ! -d "$NUCLIDE_DIR/src" ]; then
+    msg "Cloning Nuclide SDK..."
+    git clone --depth 1 -b current https://code.idtech.space/vera/nuclide.git "$NUCLIDE_DIR"
+    git clone --depth 1 -b current https://code.idtech.space/fn/valve.git "$NUCLIDE_DIR/valve"
+fi
+
+FTEQCC="$FTEQW_DIR/engine/release/fteqcc64"
+if [ -f "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
+    msg "Compiling FreeCS QuakeC..."
+    mkdir -p "$NUCLIDE_DIR/cstrike"
+    cp -a "$SCRIPT_DIR/freecs-data/src" "$SCRIPT_DIR/freecs-data/DEPENDS" "$SCRIPT_DIR/freecs-data/PAK_NAME" "$SCRIPT_DIR/freecs-data/PROJECT" "$NUCLIDE_DIR/cstrike/"
+    cp -f "$FTEQCC" "$NUCLIDE_DIR/fteqcc"
+    chmod +x "$NUCLIDE_DIR/fteqcc"
+    (cd "$NUCLIDE_DIR" && make game GAME=cstrike)
+    msg "Copying compiled progs..."
+    cp -f "$NUCLIDE_DIR/cstrike/progs.dat" "$NUCLIDE_DIR/cstrike/csprogs.dat" "$NUCLIDE_DIR/cstrike/hud.dat" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
+    cp -af "$NUCLIDE_DIR/cstrike/progs/" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
+else
+    msg "Skipping QC compilation (fteqcc or freecs-data/src not found)"
+fi
 
 msg "Extracting valve pk3 (flat, avoids nested pk3 OOM on low-RAM servers)..."
 TMPEXT="$BUILD_DIR/tmp/valve_extract"
