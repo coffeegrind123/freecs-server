@@ -8,8 +8,9 @@ For the **game client**, see [coffeegrind123/freecs-client](https://github.com/c
 
 - Debian/Ubuntu Linux (x86_64)
 - Root access
-- ~500MB disk space (includes CS 1.5 data + HL1 base assets)
-- ~256MB RAM minimum (QC VM tuned for low-memory servers)
+- ~2GB disk space for build (downloads + compiled artifacts)
+- ~256MB RAM minimum at runtime (QC VM tuned for low-memory servers)
+- Build tools: `gcc`, `make`, `git`, `curl`, `unzip`, `zip`
 - `megatools` and `p7zip-full` (for downloading HL1 valve data)
 
 ## Quick Start
@@ -18,8 +19,8 @@ For the **game client**, see [coffeegrind123/freecs-client](https://github.com/c
 git clone https://github.com/coffeegrind123/freecs-server.git
 cd freecs-server
 
-# Clone FreeCS game data
-git clone https://github.com/eukara/freecs.git freecs-data
+# Clone FreeCS game data (our fork with QC fixes)
+git clone https://github.com/coffeegrind123/freecs-client.git freecs-data
 
 # Build the deployment package (downloads ~1GB of game data on first run)
 ./package.sh
@@ -31,15 +32,17 @@ ssh root@your-server 'cd /root && tar xzf freecs-server.tar.gz && cd freecs-serv
 
 ## What package.sh does
 
-1. Downloads [FTEQW](https://github.com/fte-team/fteqw) dedicated server binary (`fteqw-sv64`)
-2. Downloads [Rad-Therapy](https://www.frag-net.com/pkgs/package_valve.pk3) (open-source Half-Life base data)
-3. Downloads [FreeCS release pk3](https://www.frag-net.com/pkgs/package_cstrike.pk3) (compiled game logic)
-4. Downloads CS 1.5 data from archive.org (maps, models, sounds, sprites, textures)
-5. Downloads GoldSrc Package from mega.nz and extracts HL1 valve data (models, sounds, sprites, WADs) as `valve-data.pk3`
-6. Extracts Rad-Therapy pk3s flat to avoid nested-archive OOM on low-RAM servers
-7. Copies FreeCS repo data (progs, configs, bot waypoints, entity patches, etc.)
-8. Copies server config, mapcycle, and MOTD
-9. Creates a deployable tarball
+1. Clones [FTEQW](https://github.com/fte-team/fteqw), applies engine patches (`scripts/patch-fteqw.sh`), builds static libraries (`make makelibs`), and compiles a patched dedicated server binary (`make sv-rel`)
+2. Builds `fteqcc` (QuakeC compiler) from the same FTEQW source
+3. Clones [Nuclide SDK](https://code.idtech.space/vera/nuclide) and [valve](https://code.idtech.space/fn/valve) (current branch), compiles FreeCS QuakeC from `freecs-data/src/` — produces `progs.dat` with our fixes (timelimit map change, API compat)
+4. Downloads [Rad-Therapy](https://www.frag-net.com/pkgs/package_valve.pk3) (open-source Half-Life base data)
+5. Downloads [FreeCS release pk3](https://www.frag-net.com/pkgs/package_cstrike.pk3) (fallback game data)
+6. Downloads CS 1.5 data from archive.org (maps, models, sounds, sprites, textures)
+7. Downloads GoldSrc Package from mega.nz and extracts HL1 valve data as `valve-data.pk3`
+8. Extracts Rad-Therapy pk3s flat to avoid nested-archive OOM on low-RAM servers
+9. Copies FreeCS repo data (configs, bot waypoints, entity patches, etc.) with compiled progs overlaid
+10. Copies server config, mapcycle, and MOTD
+11. Creates a deployable tarball
 
 ## What install.sh does
 
@@ -119,7 +122,11 @@ freecs-server/
 
 ## FTEQW Engine Patches
 
-The dedicated server binary shipped by `package.sh` is stock FTEQW. For a patched server binary with the `infoResponse` fix (sends full serverinfo instead of empty 17-byte header), build from source with the patch at [coffeegrind123/freecs-client/scripts/patch-fteqw.sh](https://github.com/coffeegrind123/freecs-client/blob/master/scripts/patch-fteqw.sh).
+The dedicated server binary is built from source with patches applied via `scripts/patch-fteqw.sh`:
+
+- **Fix empty `infoResponse`** — sends full serverinfo (836 bytes) instead of empty 17-byte header to dpmaster clients
+
+The same patch file is shared with [coffeegrind123/freecs-client](https://github.com/coffeegrind123/freecs-client) which applies additional client-side fixes.
 
 ## License
 
