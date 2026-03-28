@@ -34,16 +34,8 @@ mkdir -p "$BUILD_DIR/tmp" "$PKG_DIR"
 DL_DIR="$BUILD_DIR/downloads"
 mkdir -p "$DL_DIR"
 
-download "$VALVE_PK3_URL" "$DL_DIR/package_valve_orig.pk3"
+download "$VALVE_PK3_URL" "$DL_DIR/package_valve.pk3"
 download "$CSTRIKE_PK3_URL" "$DL_DIR/package_cstrike.pk3"
-
-if [ ! -f "$DL_DIR/package_valve.pk3" ] || [ "$DL_DIR/package_valve_orig.pk3" -nt "$DL_DIR/package_valve.pk3" ]; then
-    msg "Stripping frag-net menu.dat from valve pk3..."
-    TMPSTRIP="$BUILD_DIR/tmp/valve_strip"
-    mkdir -p "$TMPSTRIP"
-    (cd "$TMPSTRIP" && unzip -qo "$DL_DIR/package_valve_orig.pk3" && rm -f menu.dat && zip -qr "$DL_DIR/package_valve.pk3" .)
-    rm -rf "$TMPSTRIP"
-fi
 download "$CS15_URL" "$DL_DIR/cs15data.zip"
 
 if [ ! -f "$DL_DIR/valve-data.pk3" ]; then
@@ -100,6 +92,15 @@ if [ ! -d "$NUCLIDE_DIR/src" ]; then
     git clone https://code.idtech.space/fn/valve.git "$NUCLIDE_DIR/valve" && (cd "$NUCLIDE_DIR/valve" && git checkout 9272244)
 fi
 
+msg "Patching Nuclide menu (replace frag-net with our master)..."
+sed -i 's|"master.frag-net.com"|"ms.cs16.net"|' "$NUCLIDE_DIR/src/platform/master.h"
+sed -i 's|tcp://irc.frag-net.com:6667|//disabled|' "$NUCLIDE_DIR/src/menu-fn/m_chatrooms.qc"
+sed -i 's|http://www.frag-net.com/mods/_list.txt||' "$NUCLIDE_DIR/src/platform/modserver.qc"
+sed -i 's|http://www.frag-net.com/mods/%s.fmf||' "$NUCLIDE_DIR/src/platform/modserver.qc"
+sed -i 's|http://www.frag-net.com/dl/packages_%s||' "$NUCLIDE_DIR/src/platform/updates.qc"
+sed -i 's|http://www.frag-net.com/dl/img/%s.jpg||' "$NUCLIDE_DIR/src/platform/updates.qc"
+sed -i 's|http://www.frag-net.com/dl/%s_packages||' "$NUCLIDE_DIR/src/menu-fn/entry.qc"
+
 FTEQCC="$(find "$FTEQW_DIR/engine/release" -name 'fteqcc*' -type f -executable ! -name '*.db' 2>/dev/null | head -1)"
 if [ -n "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
     msg "Compiling FreeCS QuakeC..."
@@ -110,6 +111,10 @@ if [ -n "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
     (cd "$NUCLIDE_DIR/cstrike/src/client" && "$FTEQCC" -I../../../src/xr/ progs.src)
     msg "Copying compiled progs..."
     cp -f "$NUCLIDE_DIR/cstrike/progs.dat" "$NUCLIDE_DIR/cstrike/csprogs.dat" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
+
+    msg "Compiling patched menu.dat..."
+    mkdir -p "$NUCLIDE_DIR/platform"
+    (cd "$NUCLIDE_DIR/src/menu-fn" && "$FTEQCC" -I../../src/xr/ progs.src)
 else
     msg "Skipping QC compilation (fteqcc or freecs-data/src not found)"
 fi
@@ -118,8 +123,14 @@ msg "Extracting valve pk3 (flat, avoids nested pk3 OOM on low-RAM servers)..."
 TMPEXT="$BUILD_DIR/tmp/valve_extract"
 mkdir -p "$TMPEXT"
 unzip -qo "$DL_DIR/package_valve.pk3" -d "$TMPEXT"
-mv "$TMPEXT"/*.pk3 "$TMPEXT"/*.dat "$HLDIR/valve/"
+rm -f "$TMPEXT/menu.dat"
+mv "$TMPEXT"/*.pk3 "$TMPEXT"/*.dat "$HLDIR/valve/" 2>/dev/null || true
 rm -rf "$TMPEXT"
+
+if [ -f "$NUCLIDE_DIR/platform/menu.dat" ]; then
+    msg "Installing patched menu.dat..."
+    cp -f "$NUCLIDE_DIR/platform/menu.dat" "$HLDIR/valve/menu.dat"
+fi
 
 msg "Copying HL1 valve data..."
 cp -f "$DL_DIR/valve-data.pk3" "$HLDIR/valve/valve-data.pk3"
