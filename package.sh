@@ -6,6 +6,9 @@ BUILD_DIR="$SCRIPT_DIR/build"
 PKG_DIR="$BUILD_DIR/freecs-server"
 HLDIR="$PKG_DIR/Half-Life"
 
+FREECS_CLIENT_REPO="https://github.com/coffeegrind123/freecs-client.git"
+FREECS_CLIENT_DIR="$BUILD_DIR/freecs-client"
+
 VALVE_PK3_URL="https://www.frag-net.com/pkgs/package_valve.pk3"
 CSTRIKE_PK3_URL="https://www.frag-net.com/pkgs/package_cstrike.pk3"
 CS15_URL="https://archive.org/download/counter-strike-1.5/csv15full_cstrike.zip"
@@ -104,22 +107,26 @@ sed -i 's|http://www.frag-net.com/dl/img/%s.jpg||' "$NUCLIDE_DIR/src/platform/up
 sed -i 's|http://www.frag-net.com/dl/%s_packages||' "$NUCLIDE_DIR/src/menu-fn/entry.qc"
 
 FTEQCC="$(find "$FTEQW_DIR/engine/release" -name 'fteqcc*' -type f -executable ! -name '*.db' 2>/dev/null | head -1)"
-if [ -n "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
-    msg "Compiling FreeCS QuakeC..."
-    rm -rf "$NUCLIDE_DIR/cstrike"
-    mkdir -p "$NUCLIDE_DIR/cstrike"
-    tar -C "$SCRIPT_DIR/freecs-data" --exclude=build --exclude=.git -cf - . | tar -C "$NUCLIDE_DIR/cstrike" -xf -
-    (cd "$NUCLIDE_DIR/cstrike/src/server" && "$FTEQCC" -I../../../src/xr/ progs.src)
-    (cd "$NUCLIDE_DIR/cstrike/src/client" && "$FTEQCC" -I../../../src/xr/ progs.src)
-    msg "Copying compiled progs..."
-    cp -f "$NUCLIDE_DIR/cstrike/progs.dat" "$NUCLIDE_DIR/cstrike/csprogs.dat" "$SCRIPT_DIR/freecs-data/" 2>/dev/null || true
+[ -n "$FTEQCC" ] || err "fteqcc not found after build"
 
-    msg "Compiling patched menu.dat..."
-    mkdir -p "$NUCLIDE_DIR/platform"
-    (cd "$NUCLIDE_DIR/src/menu-fn" && "$FTEQCC" -I../../src/xr/ progs.src)
+msg "Fetching latest FreeCS client source..."
+if [ -d "$FREECS_CLIENT_DIR/.git" ]; then
+    (cd "$FREECS_CLIENT_DIR" && git pull --ff-only)
 else
-    msg "Skipping QC compilation (fteqcc or freecs-data/src not found)"
+    rm -rf "$FREECS_CLIENT_DIR"
+    git clone --depth 1 "$FREECS_CLIENT_REPO" "$FREECS_CLIENT_DIR"
 fi
+
+msg "Compiling FreeCS QuakeC..."
+rm -rf "$NUCLIDE_DIR/cstrike"
+mkdir -p "$NUCLIDE_DIR/cstrike"
+tar -C "$FREECS_CLIENT_DIR" --exclude=build --exclude=.git -cf - . | tar -C "$NUCLIDE_DIR/cstrike" -xf -
+(cd "$NUCLIDE_DIR/cstrike/src/server" && "$FTEQCC" -I../../../src/xr/ progs.src)
+(cd "$NUCLIDE_DIR/cstrike/src/client" && "$FTEQCC" -I../../../src/xr/ progs.src)
+
+msg "Compiling patched menu.dat..."
+mkdir -p "$NUCLIDE_DIR/platform"
+(cd "$NUCLIDE_DIR/src/menu-fn" && "$FTEQCC" -I../../src/xr/ progs.src)
 
 msg "Extracting valve pk3 (flat, avoids nested pk3 OOM on low-RAM servers)..."
 TMPEXT="$BUILD_DIR/tmp/valve_extract"
@@ -162,8 +169,8 @@ msg "Copying FreeCS repo data..."
 for item in cfg data decls fonts gfx maps particles progs resource scripts \
             progs.dat csprogs.dat hud.dat quake.rc icon.tga \
             default_aliases.cfg default_cstrike.cfg default_cvar.cfg; do
-    if [ -e "$SCRIPT_DIR/freecs-data/$item" ]; then
-        cp -a "$SCRIPT_DIR/freecs-data/$item" "$HLDIR/cstrike/"
+    if [ -e "$FREECS_CLIENT_DIR/$item" ]; then
+        cp -a "$FREECS_CLIENT_DIR/$item" "$HLDIR/cstrike/"
     fi
 done
 
