@@ -35,6 +35,8 @@ DL_DIR="$BUILD_DIR/downloads"
 mkdir -p "$DL_DIR"
 
 download "$VALVE_PK3_URL" "$DL_DIR/package_valve.pk3"
+msg "Removing upstream menu.dat from valve pk3 (replaced by our patched build)..."
+zip -qd "$DL_DIR/package_valve.pk3" menu.dat 2>/dev/null || true
 download "$CSTRIKE_PK3_URL" "$DL_DIR/package_cstrike.pk3"
 download "$CS15_URL" "$DL_DIR/cs15data.zip"
 
