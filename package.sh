@@ -74,6 +74,7 @@ else
 
     msg "Patching FTEQW..."
     bash "$SCRIPT_DIR/scripts/patch-fteqw.sh" "$FTEQW_DIR"
+    sed -i 's|"halflife",\t"Rad-Therapy",|"halflife",\t"FTE-Quake",|' "$FTEQW_DIR/engine/common/fs.c"
 
     msg "Building FTEQW static libraries..."
     (cd "$FTEQW_DIR/engine" && make makelibs FTE_TARGET=linux64)
