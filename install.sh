@@ -10,18 +10,22 @@ msg() { echo "==> $*"; }
 [ "$(id -u)" -eq 0 ] || err "Must be run as root"
 [ -d "$SCRIPT_DIR/Half-Life" ] || err "Half-Life/ directory not found — run from extracted package"
 
+UPGRADE=0
 if [ -d "$INSTALL_DIR" ]; then
-    err "$INSTALL_DIR already exists. Uninstall first or set INSTALL_DIR to a different path."
+    msg "Existing install detected — upgrading..."
+    UPGRADE=1
+    systemctl stop freecs 2>/dev/null || true
+    sleep 1
 fi
 
-for port in 27500; do
-    if ss -tlnp | grep -q ":${port} " || ss -ulnp | grep -q ":${port} "; then
-        err "Port $port is already in use"
+if [ "$UPGRADE" -eq 0 ]; then
+    if ss -ulnp | grep -q ":27500 "; then
+        err "UDP port 27500 is already in use by another process"
     fi
-done
+fi
 
 msg "Installing runtime dependencies..."
-dpkg --add-architecture i386
+dpkg --add-architecture i386 2>/dev/null || true
 apt-get update -qq
 apt-get install -y --no-install-recommends lib32gcc-s1 lib32stdc++6 pax-utils || true
 
@@ -32,7 +36,24 @@ fi
 
 msg "Installing files to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
+
+if [ "$UPGRADE" -eq 1 ] && [ -f "$INSTALL_DIR/Half-Life/cstrike/server.cfg" ]; then
+    msg "Preserving server config..."
+    cp -f "$INSTALL_DIR/Half-Life/cstrike/server.cfg" "/tmp/freecs-server.cfg.bak" 2>/dev/null || true
+    cp -f "$INSTALL_DIR/Half-Life/cstrike/mapcycle.txt" "/tmp/freecs-mapcycle.bak" 2>/dev/null || true
+    cp -f "$INSTALL_DIR/Half-Life/cstrike/motd.txt" "/tmp/freecs-motd.bak" 2>/dev/null || true
+fi
+
+rm -rf "$INSTALL_DIR/Half-Life"
 cp -a "$SCRIPT_DIR/Half-Life" "$INSTALL_DIR/"
+
+if [ "$UPGRADE" -eq 1 ] && [ -f "/tmp/freecs-server.cfg.bak" ]; then
+    msg "Restoring server config..."
+    cp -f "/tmp/freecs-server.cfg.bak" "$INSTALL_DIR/Half-Life/cstrike/server.cfg"
+    cp -f "/tmp/freecs-mapcycle.bak" "$INSTALL_DIR/Half-Life/cstrike/mapcycle.txt" 2>/dev/null || true
+    cp -f "/tmp/freecs-motd.bak" "$INSTALL_DIR/Half-Life/cstrike/motd.txt" 2>/dev/null || true
+    rm -f /tmp/freecs-server.cfg.bak /tmp/freecs-mapcycle.bak /tmp/freecs-motd.bak
+fi
 
 if command -v scanelf >/dev/null 2>&1; then
     msg "Clearing executable stack flags..."
@@ -57,20 +78,20 @@ ExecStart=$INSTALL_DIR/Half-Life/fteqw-sv64 -game cstrike +pr_ssqc_memsize 32m +
 Restart=always
 RestartSec=5
 RuntimeMaxSec=10800
+MemoryMax=150M
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 msg "Writing manifest..."
-MANIFEST="$INSTALL_DIR/.manifest"
 {
     echo "# freecs-server install manifest"
     echo "# Generated: $(date -Iseconds)"
     echo "user:freecs"
     echo "service:/etc/systemd/system/freecs.service"
     echo "dir:$INSTALL_DIR"
-} > "$MANIFEST"
+} > "$INSTALL_DIR/.manifest"
 
 msg "Configuring firewall..."
 add_iptables_rule() {
@@ -101,9 +122,13 @@ systemctl daemon-reload
 systemctl enable --now freecs
 
 msg ""
-msg "Installation complete!"
+if [ "$UPGRADE" -eq 1 ]; then
+    msg "Upgrade complete!"
+else
+    msg "Installation complete!"
+fi
 msg "  Install dir:  $INSTALL_DIR"
-msg "  Game server:  port 27500 (UDP/TCP)"
+msg "  Game server:  port 27500 (UDP)"
 msg ""
 msg "Commands:"
 msg "  systemctl status freecs"

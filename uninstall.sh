@@ -12,6 +12,11 @@ msg "Stopping services..."
 systemctl stop freecs 2>/dev/null || true
 systemctl disable freecs 2>/dev/null || true
 
+msg "Killing any lingering processes..."
+pkill -u freecs 2>/dev/null || true
+sleep 1
+pkill -9 -u freecs 2>/dev/null || true
+
 msg "Removing systemd service..."
 rm -f /etc/systemd/system/freecs.service
 systemctl daemon-reload
