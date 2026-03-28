@@ -87,12 +87,12 @@ if [ ! -d "$NUCLIDE_DIR/src" ]; then
     git clone https://code.idtech.space/fn/valve.git "$NUCLIDE_DIR/valve" && (cd "$NUCLIDE_DIR/valve" && git checkout 9272244)
 fi
 
-FTEQCC="$FTEQW_DIR/engine/release/fteqcc64"
-if [ -f "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
+FTEQCC="$(find "$FTEQW_DIR/engine/release" -name 'fteqcc*' -type f -executable ! -name '*.db' 2>/dev/null | head -1)"
+if [ -n "$FTEQCC" ] && [ -d "$SCRIPT_DIR/freecs-data/src" ]; then
     msg "Compiling FreeCS QuakeC..."
+    rm -rf "$NUCLIDE_DIR/cstrike"
     mkdir -p "$NUCLIDE_DIR/cstrike"
-    cp -a "$SCRIPT_DIR/freecs-data/src" "$NUCLIDE_DIR/cstrike/"
-    cp -f "$SCRIPT_DIR/freecs-data/DEPENDS" "$SCRIPT_DIR/freecs-data/PAK_NAME" "$SCRIPT_DIR/freecs-data/PROJECT" "$NUCLIDE_DIR/cstrike/" 2>/dev/null || true
+    tar -C "$SCRIPT_DIR/freecs-data" --exclude=build --exclude=.git -cf - . | tar -C "$NUCLIDE_DIR/cstrike" -xf -
     (cd "$NUCLIDE_DIR/cstrike/src/server" && "$FTEQCC" -I../../../src/xr/ progs.src)
     (cd "$NUCLIDE_DIR/cstrike/src/client" && "$FTEQCC" -I../../../src/xr/ progs.src)
     msg "Copying compiled progs..."
