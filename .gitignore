@@ -2,3 +2,7 @@ build/
 freecs-data/
 freecs-server.tar.gz
 bin/
+.env
+Half-Life/
+freecs-client-win64*
+config.cfg
